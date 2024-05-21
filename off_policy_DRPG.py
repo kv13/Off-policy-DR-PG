@@ -55,9 +55,16 @@ def policy_evaluation(policy, env, n=1000):
             V[s] += reward + delta * V[next_s]
     return V / n
 
-def evaluate_G1(policy, wrt_theta, env, n=1000):
+def Q_evaluation(policy, V_hat, env, delta = 0.999):
+    Q = np.zeros(env.num_states)
+    for s in range(env.num_states):
+        action         = policy.step(s)
+        next_s, reward = env.step(s, action) 
+        Q[s]           = reward +  delta * V_hat[next_s]
+    return Q
+
+def evaluate_G1(policy, wrt_theta, V_hat, env, n=1000):
     
-    V_hat = policy_evaluation(policy, env)
     delta = 0.999
     G1    = np.zeros(env.num_states)
 
@@ -68,13 +75,11 @@ def evaluate_G1(policy, wrt_theta, env, n=1000):
             G1[s]         += (wrt_theta == a) * (reward + delta * V_hat[next_s] - V_hat[s]) * 1/policy.thetas[wrt_theta]
     return G1/n
 
-def evaluate_grad_Q(policy, wrt_theta, env, L=30, n_q=20):
+def evaluate_grad_Q(policy, wrt_theta, V_hat, env, L=30, n_q=20):
     
     gamma_prime = 0.9
     delta       = 0.999
     grad_Q      = np.zeros(env.num_states, env.num_actions)
-
-    V_hat       = policy_evaluation(policy, env)
     
     for s in range(env.num_states):
         for a in range(env.num_actions):
@@ -90,15 +95,14 @@ def evaluate_grad_Q(policy, wrt_theta, env, L=30, n_q=20):
     return grad_Q/n_q
 
 
-def evaluate_G2(policy, wrt_theta, env, n_u=20):
+def evaluate_G2(policy, wrt_theta, Q_grad, env, n_u=20):
 
     G2      = np.zeros(env.num_states)
-    Q       = evaluate_grad_Q(policy, wrt_theta, env)
     
     for s in range(env.num_states):
         for _ in range(n_u):
             action = policy.step(s)
-            G2    += Q(s, action) 
+            G2    += Q_grad(s, action) 
     return G2 / n_u
 
 
@@ -118,18 +122,21 @@ def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps
 
         # calculate tilte values 
         
-        V_hat  =
-        Q_hat  =  
+        V_hat = policy_evaluation(target_policy, env)
+        Q_hat = Q_evaluation(target_policy, V_hat, env) 
+        
+        G1     = np.zeros(target_policy.num_states, target_policy.num_actions)
+        G2     = np.zeros(target_policy.num_states, target_policy.num_actions)
+        grad_Q = np.zeros(target_policy.num_states, target_policy.num_actions)
         
         for state in range(target_policy.num_states):
             for action in range(target_policy.num_actions):
 
-                G1[state,action] = 
-                G2               = 
-                grad_Q           =  
+                G1[state, action]     = evaluate_G1(target_policy, action, V_hat, env)
+                grad_Q[state, action] = evaluate_grad_Q(target_policy, action, V_hat, env)
+                G2[state, action]     = evaluate_G2(target_policy, action, grad_Q[state, action], env)
+                 
             # update steps
-
-        
 
             # rho = target_policy[state, action] / behavior_policy[state, action] 
             # V_hat = policy_evaluation(target_policy, env)  # Evaluate target policy
