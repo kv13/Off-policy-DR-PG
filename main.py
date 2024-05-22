@@ -7,11 +7,12 @@ def main():
     num_cols     = 5
     num_states   = num_cols * num_rows
     num_actions  = 4
-    num_episodes = 1
+    num_episodes = 5
     T            = 20
     
     # define rewards 
-    rewards     = np.random.rand(num_states, num_actions)
+    rewards     = 2*np.random.rand(num_states, num_actions) - 1
+    print('rewards', rewards)
     
     # define transition probabilities 
     # deterministic / stochastic
