@@ -27,7 +27,7 @@ def main():
     env = off_policy_DRPG.Tabular_MDP(num_states, num_rows, num_cols, num_actions, rewards, deterministic)
     
     # policies
-    behavior_policy = off_policy_DRPG.Policy(num_states, num_actions)
+    behavior_policy  = off_policy_DRPG.Policy(num_states, num_actions)
     target_policy    = off_policy_DRPG.Policy(num_states, num_actions)
 
     _ = off_policy_DRPG.off_policy_DRPG(env, 
