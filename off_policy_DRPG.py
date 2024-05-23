@@ -1,7 +1,7 @@
 import numpy as np 
 
 class Tabular_MDP:
-    def __init__(self, num_states, num_rows, num_cols, num_actions,  rewards, deterministic, transition_probs = [], gamma=0.9):
+    def __init__(self, num_states, num_rows, num_cols, num_actions,  rewards, deterministic, transition_probs = [], gamma=1):
         self.num_states    = num_states
         self.num_rows      = num_rows
         self.num_cols      = num_cols
@@ -39,13 +39,16 @@ class Policy:
     def __init__(self, num_states, num_actions):
         self.num_states  = num_states
         self.num_actions = num_actions
-        self.thetas      = 1/self.num_actions * np.ones((self.num_states, self.num_actions))
+        self.thetas      = np.ones((self.num_states, self.num_actions))
+        self.probs       = np.zeros((self.num_states, self.num_actions))
+        for state in range(self.num_states):
+            self.probs[state, :] = np.exp(self.thetas[state,:]) / sum(np.exp(self.thetas[state,:]))  
 
     def step(self, state):
-        next_action =  np.random.choice(self.num_actions, p=self.thetas[state])
+        next_action =  np.random.choice(self.num_actions, p=self.probs[state])
         return next_action
 
-def policy_evaluation(policy, env, n=1000):
+def policy_evaluation(policy, env, n=100):
     delta = 0.999
     V = np.zeros(env.num_states)
     for i in range(1, n):
@@ -65,7 +68,7 @@ def Q_evaluation(policy, V_hat, env, delta = 0.999):
         Q[s]           = reward +  delta * V_hat[next_s]
     return Q
 
-def evaluate_G1(policy, state, wrt_theta, V_hat, env, n=1000):
+def evaluate_G1(policy, state, wrt_theta, V_hat, env, n=100):
     
     delta = 0.999
     G1    = np.zeros(env.num_states)
@@ -74,7 +77,7 @@ def evaluate_G1(policy, state, wrt_theta, V_hat, env, n=1000):
         for _ in range(n):
             a              = policy.step(s)
             next_s, reward = env.step(s, a) 
-            G1[s]         += (reward + delta * V_hat[next_s] - V_hat[s]) * ((wrt_theta == a) - policy.thetas[state,wrt_theta])
+            G1[s]         += (reward + delta * V_hat[next_s] - V_hat[s]) * ((wrt_theta == a) - policy.probs[state, wrt_theta])
     return G1/n
 
 def evaluate_grad_Q(policy, state, wrt_theta, V_hat, env, L=30, n_q=20):
@@ -90,7 +93,7 @@ def evaluate_grad_Q(policy, state, wrt_theta, V_hat, env, L=30, n_q=20):
                 action = a
                 for k in range(L):
                     next_state, reward = env.step(state, action)
-                    grad_Q[s,a]       += gamma_prime**k * (reward + delta * V_hat[next_state] - V_hat[state]) * ((wrt_theta == action) - policy.thetas[state,wrt_theta])
+                    grad_Q[s,a]       += gamma_prime**k * (reward + delta * V_hat[next_state] - V_hat[state]) * ((wrt_theta == action) - policy.probs[state,wrt_theta])
                     state              = next_state
                     action             = policy.step(state)
     
@@ -113,7 +116,7 @@ def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps
     for episode in range(num_episodes):
         state = np.random.choice(env.num_states) 
 
-        print('thetas ', target_policy.thetas)
+        print('thetas ', target_policy.probs)
         
         # sample trajectory using bahavior policy
         rewards = []
@@ -126,7 +129,7 @@ def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps
             actions.append(action)
             next_state, reward = env.step(state, action)
             rewards.append(reward)
-            rhos.append(behavior_policy.thetas[state, action] / (target_policy.thetas[state, action]+0.0001))
+            rhos.append(behavior_policy.probs[state, action] / (target_policy.probs[state, action]))
             state = next_state
 
         # calculate tilte values 
@@ -145,36 +148,35 @@ def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps
                 grad_Q[state, action, :, :] = evaluate_grad_Q(target_policy, state, action, V_hat, env)
                 G2[state, action, :]        = evaluate_G2(target_policy, grad_Q[state, action], env)
 
-        print(G1)
-        # print(grad_Q)
-        # print(G2)
+        # print(G1)
+        # 
         # DRPG = 0
         # for t in range(max_steps_per_episode):
         
         for state in range(target_policy.num_states):
             for action in range(target_policy.num_actions):
                 DRPG = 0
-                sum1 = 0
-                sum2 = 0
                 for t in range(max_steps_per_episode):
-                    if action == actions[t]:
-                        for t1 in range(t,max_steps_per_episode):
-                            rho_prod_1 = np.prod(rhos[0:t1+1])
-                            sum1 += rho_prod_1*(env.gamma*delta)**(t1-t)*rewards[t1]
+                    sum1 = 0
+                    sum2 = 0
+                    for t1 in range(t,max_steps_per_episode):
+                        rho_prod_1 = np.prod(rhos[0:t1+1])
+                        sum1 += rho_prod_1*(env.gamma*delta)**(t1-t)*rewards[t1]
 
-                        for t2 in range(t+1,max_steps_per_episode):
-                            rho_prod_2 = np.prod(rhos[0:t2])
-                            sum2 += rho_prod_2*(theta*delta)**(t2-t)*(rhos[t2]*Q_hat[states[t2]] - V_hat[states[t2]])
+                    for t2 in range(t+1,max_steps_per_episode):
+                        rho_prod_2 = np.prod(rhos[0:t2])
+                        sum2 += rho_prod_2*(theta*delta)**(t2-t)*(rhos[t2]*Q_hat[states[t2]] - V_hat[states[t2]])
+                    
                     if t == 0: _rho_prod = 1
                     else: _rho_prod = np.prod(rhos[0:t])
-                    DRPG += ((action == actions[t]) - target_policy.thetas[state,action])*(sum1 - sum2) \
+                    DRPG += ((action == actions[t]) - target_policy.probs[state,action])*(sum1 - sum2) \
                          + _rho_prod*(G1[state, action, states[t]] + G2[state, action, states[t]]) \
-                         - np.prod(rhos[0:t+1])*(grad_Q[state, action, states[t], actions[t]] - Q_hat[states[t]]*((action == actions[t]) - target_policy.thetas[state,action]))
-                
+                         - np.prod(rhos[0:t+1])*(grad_Q[state, action, states[t], actions[t]] - Q_hat[states[t]]*((action == actions[t]) - target_policy.probs[state,action]))
+                print(DRPG)
                 target_policy.thetas[state,action] = target_policy.thetas[state,action] + lr*DRPG
             
             # print(target_policy.thetas[state,:])
-            target_policy.thetas[state,:] = np.exp(target_policy.thetas[state,:]) / sum(np.exp(target_policy.thetas[state,:]))
+            target_policy.probs[state,:] = np.exp(target_policy.thetas[state,:]) / sum(np.exp(target_policy.thetas[state,:]))
     return 0
 
 
