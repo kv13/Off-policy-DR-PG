@@ -107,7 +107,7 @@ def evaluate_G2(policy, Q_grad, env, n_u=20):
     for s in range(env.num_states):
         for _ in range(n_u):
             action = policy.step(s)
-            G2    += Q_grad[s, action]
+            G2[s]    += Q_grad[s, action]
     return G2 / n_u
 
 
@@ -129,7 +129,7 @@ def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps
             actions.append(action)
             next_state, reward = env.step(state, action)
             rewards.append(reward)
-            rhos.append(behavior_policy.probs[state, action] / (target_policy.probs[state, action]))
+            rhos.append(behavior_policy.probs[state, action] / (target_policy.probs[state, action] + 1e-6))
             state = next_state
 
         # calculate tilte values 
