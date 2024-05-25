@@ -7,13 +7,13 @@ def main():
     num_cols     = 5
     num_states   = num_cols * num_rows
     num_actions  = 4
-    num_episodes = 20 
+    num_episodes = 20
     T            = 10
     
     # define rewards 
-    rewards     = 2*np.random.rand(num_states, num_actions) - 1
-    rewards[num_cols-1, 1] = 10
-    rewards[num_cols-1, 2] = 10
+    rewards     = np.random.rand(num_states, num_actions) 
+    rewards[num_cols-1, 1] = 2
+    rewards[num_cols-1, 2] = 2
     print('rewards', rewards)
     
     # define transition probabilities 
@@ -30,7 +30,12 @@ def main():
     
     # policies
     behavior_policy  = off_policy_DRPG.Policy(num_states, num_actions)
+    behavior_policy._init_unif()
+
     target_policy    = off_policy_DRPG.Policy(num_states, num_actions)
+    target_policy._init_rand(0.01)
+
+
 
     _ = off_policy_DRPG.off_policy_DRPG(env, 
                                         behavior_policy, 

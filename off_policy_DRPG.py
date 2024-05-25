@@ -39,10 +39,18 @@ class Policy:
     def __init__(self, num_states, num_actions):
         self.num_states  = num_states
         self.num_actions = num_actions
+    
+    def _init_unif(self):    
         self.thetas      = np.ones((self.num_states, self.num_actions))
         self.probs       = np.zeros((self.num_states, self.num_actions))
         for state in range(self.num_states):
             self.probs[state, :] = np.exp(self.thetas[state,:]) / sum(np.exp(self.thetas[state,:]))  
+    
+    def _init_rand(self,alpha):
+        self.thetas = (1-alpha) * np.ones((self.num_states, self.num_actions)) + alpha * 2 * np.random.rand(self.num_states, self.num_actions)
+        self.probs       = np.zeros((self.num_states, self.num_actions))
+        for state in range(self.num_states):
+            self.probs[state, :] = np.exp(self.thetas[state,:]) / sum(np.exp(self.thetas[state,:]))
 
     def step(self, state):
         next_action =  np.random.choice(self.num_actions, p=self.probs[state])
@@ -110,20 +118,30 @@ def evaluate_G2(policy, Q_grad, env, n_u=20):
             G2[s]    += Q_grad[s, action]
     return G2 / n_u
 
-def cum_reward(policy, env):
-    V = policy_evaluation(policy, env)
-    total_rew = 0
-    for s in range(env.num_states):
-        total_rew += V[s]
-    return total_rew/env.num_states
+def cum_reward(policy, env, T):
+    num_seeds   = 5
+    all_rewards = []
+    for _ in range(num_seeds):
+        state = env.num_cols * int(env.num_rows/2) + int(env.num_cols/2) #np.random.choice(env.num_states) 
 
+        for traj in range(5):
+            total_reward_over_traj = 0
+            for t in range(T):
+                action             = policy.step(state)
+                next_state, reward = env.step(state, action)
+                total_reward_over_traj += reward
+                state = next_state
+            all_rewards.append(total_reward_over_traj)
+    return np.mean(all_rewards)
+            
 def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps_per_episode, theta=0.9, delta = 0.999, lr=0.01):
-    
+    threshold = 50
     for episode in range(num_episodes):
         # state = np.random.choice(env.num_states) 
         state = env.num_cols * int(env.num_rows/2) + int(env.num_cols/2) 
-        print('initial state', state)
-        print('thetas ', target_policy.probs)
+        print('initial state:', state)
+        print('thetas target policy:', target_policy.probs)
+        print('thetas behavior policy: ', behavior_policy.probs)
         
         # sample trajectory using bahavior policy
         rewards = []
@@ -179,13 +197,15 @@ def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps
                     DRPG += ((action == actions[t]) - target_policy.probs[state,action])*(sum1 - sum2) \
                          + _rho_prod*(G1[state, action, states[t]] + G2[state, action, states[t]]) \
                          - np.prod(rhos[0:t+1])*(grad_Q[state, action, states[t], actions[t]] - Q_hat[states[t], actions[t]]*((action == actions[t]) - target_policy.probs[state,action]))
+                if np.abs(DRPG) > threshold:
+                    DRPG = np.sign(DRPG)*threshold
                 print(DRPG)
                 target_policy.thetas[state,action] = target_policy.thetas[state,action] + lr*DRPG
             
             # print(target_policy.thetas[state,:])
             target_policy.probs[state,:] = np.exp(target_policy.thetas[state,:]) / sum(np.exp(target_policy.thetas[state,:]))
-        print("Total reward for behavior policy episode ",episode, 'is: ',cum_reward(behavior_policy, env))
-        print("Total reward for target policy episode ",episode, 'is: ',cum_reward(target_policy, env))
+        print("Total reward for behavior policy episode ",episode, 'is: ',cum_reward(behavior_policy, env,max_steps_per_episode))
+        print("Total reward for target policy episode ",episode, 'is: ',cum_reward(target_policy, env, max_steps_per_episode))
     return 0
 
 
