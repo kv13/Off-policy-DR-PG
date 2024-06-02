@@ -357,3 +357,51 @@ def off_policy_traj_cv(env, behavior_policy, target_policy, num_episodes, max_st
     plt.fill_between(np.arange(num_episodes), np.array(exp_rewards)-2*np.array(exp_std), np.array(exp_rewards)+2*np.array(exp_std), color='blue', alpha=0.2)
     plt.show()
     return 0
+
+def off_policy_interface(env, behavior_policy, target_policiec_dict, num_episodes, max_steps_per_episode, theta=0.9, delta = 0.999, lr=0.01):
+
+    # init the lists for all estimators
+    cum_rewards_mean_dict = dict()
+    cum_rewards_var_dict  = dict()
+    for key in target_policiec_dict.keys():
+        cum_rewards_mean_dict[key] = []
+        cum_rewards_var_dict[key]  = []
+
+    for episode in range(num_episodes):
+        
+        state = np.random.choice(env.num_states) 
+
+        # some prints for testing 
+        print("episode:", episode)
+        print('initial state:', state)
+        print('probs behavior policy: ', behavior_policy.probs)
+        for est in target_policiec_dict.keys():
+            print('probs for', est, ':', target_policiec_dict[est].probs)
+        
+        # sample trajectory using bahavior policy
+        rewards = []
+        states  = []
+        actions = []
+        for t in range(max_steps_per_episode):
+            action = behavior_policy.step(state)
+            states.append(state)
+            actions.append(action)
+            next_state, reward = env.step(state, action)
+            rewards.append(reward)
+            state = next_state
+
+        # update policies and gather rewards
+        for est in target_policiec_dict.keys():
+            'off_DRPG', 'off_Reinf', 'off_trajcv', 'off_baselines'
+            if est == 'off_DRPG':
+                off_DRPG
+            elif est == 'off_Reinf':
+                pass
+            elif est == 'off_trajcv':
+                pass
+            elif est == 'off_baselines':
+                pass
+            else:
+                print("Not a known estimator",est, "... Continue")
+            
+    return 0
