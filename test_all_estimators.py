@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from off_policy import compute_reward_to_go, policy_evaluation, Q_evaluation, evaluate_G1, evaluate_grad_Q, evaluate_G2, cum_reward
-from tqdm import tqdm
 
 def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps_per_episode, rewards, states, rhos, actions, 
                     theta=0.9, delta = 0.999, lr=0.01):
@@ -65,8 +64,6 @@ def off_policy_REINFORCE(env, behavior_policy, target_policy, num_episodes, max_
             target_policy.probs[s,:] = np.exp(target_policy.thetas[s,:]) / sum(np.exp(target_policy.thetas[s,:]))
 
         cum, std = cum_reward(target_policy, env, max_steps_per_episode)
-
-        return cum, std 
 
 
 def off_policy_baseline(env, behavior_policy, target_policy, num_episodes, max_steps_per_episode, rewards, states, rhos, actions, 
@@ -161,9 +158,7 @@ def test_all_estimators(env, behavior_policy, target_policy_BASELINE, target_pol
     exp_std_traj_cv = []
       
     for episode in tqdm(range(num_episodes)):
-
         print('episode:', episode)
-        
         state = np.random.choice(env.num_states) 
         
         # sample trajectory using bahavior policy
@@ -211,4 +206,5 @@ def test_all_estimators(env, behavior_policy, target_policy_BASELINE, target_pol
     plt.legend(loc='best')
     plt.xlabel('Episode')
     plt.ylabel('Mean of Return')
+
     plt.show()
