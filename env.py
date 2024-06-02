@@ -2,7 +2,7 @@ import numpy as np
 
 class Tabular_MDP:
 
-    def __init__(self, num_states, num_rows, num_cols, num_actions, deterministic, transition_probs = [], gamma=1):
+    def __init__(self, num_states, num_rows, num_cols, num_actions, deterministic, transition_probs = [], gamma=0.9):
         self.num_states    = num_states
         self.num_rows      = num_rows
         self.num_cols      = num_cols
@@ -35,6 +35,9 @@ class Tabular_MDP:
         for i in range(self.num_cols):
             self.R[i, 1] = off_grid_reward
             self.R[(self.num_rows-1)*self.num_cols+i, 3] = off_grid_reward
+
+        self.R[goal_state - self.num_cols, 3] = goal_reward
+        self.R[goal_state-1, 2] = goal_reward
         
         self.R[goal_state, 2] = goal_reward
         self.R[goal_state, 3] = goal_reward
