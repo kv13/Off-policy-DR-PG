@@ -277,7 +277,7 @@ def off_policy_baseline(env, behavior_policy, target_policy, num_episodes, max_s
         print("Total reward for target policy episode ",episode, 'is: ',cum)
     
     plt.plot(exp_rewards)
-    plt.fill_between(np.arange(num_episodes), exp_rewards-2*exp_std, exp_rewards+2*exp_std, color='blue', alpha=0.2)
+    plt.fill_between(np.arange(num_episodes), np.array(exp_rewards)-1.96*np.array(exp_std), np.array(exp_rewards)+1.96*np.array(exp_std), color='blue', alpha=0.2)
     plt.show()
     return 0
 
@@ -354,6 +354,6 @@ def off_policy_traj_cv(env, behavior_policy, target_policy, num_episodes, max_st
         print("Total reward for target policy episode ",episode, 'is: ',cum)
     
     plt.plot(exp_rewards)
-    plt.fill_between(np.arange(num_episodes), np.array(exp_rewards)-2*np.array(exp_std), np.array(exp_rewards)+2*np.array(exp_std), color='blue', alpha=0.2)
+    plt.fill_between(np.arange(num_episodes), np.array(exp_rewards)-1.96*np.array(exp_std), np.array(exp_rewards)+1.96*np.array(exp_std), color='blue', alpha=0.2)
     plt.show()
     return 0
