@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from off_policy import compute_reward_to_go, policy_evaluation, Q_evaluation, evaluate_G1, evaluate_grad_Q, evaluate_G2, cum_reward
+from tqdm import tqdm
 
 def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps_per_episode, rewards, states, rhos, actions, 
                     theta=0.9, delta = 0.999, lr=0.01):
@@ -64,6 +65,8 @@ def off_policy_REINFORCE(env, behavior_policy, target_policy, num_episodes, max_
             target_policy.probs[s,:] = np.exp(target_policy.thetas[s,:]) / sum(np.exp(target_policy.thetas[s,:]))
 
         cum, std = cum_reward(target_policy, env, max_steps_per_episode)
+
+        return cum, std 
 
 
 def off_policy_baseline(env, behavior_policy, target_policy, num_episodes, max_steps_per_episode, rewards, states, rhos, actions, 
@@ -157,7 +160,9 @@ def test_all_estimators(env, behavior_policy, target_policy_BASELINE, target_pol
     exp_rewards_traj_cv = []
     exp_std_traj_cv = []
       
-    for episode in range(num_episodes):
+    for episode in tqdm(range(num_episodes)):
+
+        print('episode:', episode)
         
         state = np.random.choice(env.num_states) 
         
@@ -195,13 +200,15 @@ def test_all_estimators(env, behavior_policy, target_policy_BASELINE, target_pol
         exp_rewards_traj_cv.append(cum_traj_cv)
         exp_std_traj_cv.append(std_traj_cv)
 
-    plt.plot(exp_rewards_DRPG, label='DRPG', color ='blue')
+    plt.plot(exp_rewards_DRPG, label='DR-PG', color ='blue')
     plt.fill_between(np.arange(num_episodes), np.array(exp_rewards_DRPG)-1.96*np.array(exp_std_DRPG), np.array(exp_rewards_DRPG)+1.96*np.array(exp_std_DRPG), color='blue', alpha=0.2)
-    plt.plot(exp_rewards_REINFORCE, label='REINFORCE', color='red')
+    plt.plot(exp_rewards_REINFORCE, label='StandardPG', color='red')
     plt.fill_between(np.arange(num_episodes), np.array(exp_rewards_REINFORCE)-1.96*np.array(exp_std_REINFORCE), np.array(exp_rewards_REINFORCE)+1.96*np.array(exp_std_REINFORCE), color='red', alpha=0.2)
-    plt.plot(exp_rewards_baseline, label='baseline', color='green')
+    plt.plot(exp_rewards_baseline, label='State-Baseline', color='green')
     plt.fill_between(np.arange(num_episodes), np.array(exp_rewards_baseline)-1.96*np.array(exp_std_baseline), np.array(exp_rewards_baseline)+1.96*np.array(exp_std_baseline), color='green', alpha=0.2)
-    plt.plot(exp_rewards_traj_cv, label='traj_cv', color='purple')
+    plt.plot(exp_rewards_traj_cv, label='Traj_CV', color='purple')
     plt.fill_between(np.arange(num_episodes), np.array(exp_rewards_traj_cv)-1.96*np.array(exp_std_traj_cv), np.array(exp_rewards_traj_cv)+1.96*np.array(exp_std_traj_cv), color='purple', alpha=0.2)
-
+    plt.legend(loc='best')
+    plt.xlabel('Episode')
+    plt.ylabel('Mean of Return')
     plt.show()
