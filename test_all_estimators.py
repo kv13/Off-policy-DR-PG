@@ -209,6 +209,8 @@ def test_all_estimators(env, behavior_policy, target_policy_BASELINE, target_pol
     plt.xlabel('Episode')
     plt.ylabel('Mean of Return')
 
+    ''' 
+    # plot rewards and std seperately in order to have cleaner graphs.
     plt.figure()
     plt.plot(exp_rewards_DRPG, label='DR-PG', color ='blue')
     plt.plot(exp_rewards_REINFORCE, label='StandardPG', color='red')
@@ -228,5 +230,5 @@ def test_all_estimators(env, behavior_policy, target_policy_BASELINE, target_pol
     plt.legend(loc='best')
     plt.xlabel('Episode')
     plt.ylabel('Std of Return')
-
+    '''
     plt.show()
