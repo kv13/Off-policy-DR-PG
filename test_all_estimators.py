@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from off_policy import compute_reward_to_go, policy_evaluation, Q_evaluation, evaluate_G1, evaluate_grad_Q, evaluate_G2, cum_reward
+from tqdm import tqdm
 
 def off_policy_DRPG(env, behavior_policy, target_policy, num_episodes, max_steps_per_episode, rewards, states, rhos, actions, 
                     theta=0.9, delta = 0.999, lr=0.01):
