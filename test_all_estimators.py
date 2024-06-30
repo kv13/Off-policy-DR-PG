@@ -65,8 +65,7 @@ def off_policy_REINFORCE(env, behavior_policy, target_policy, num_episodes, max_
             target_policy.probs[s,:] = np.exp(target_policy.thetas[s,:]) / sum(np.exp(target_policy.thetas[s,:]))
 
         cum, std = cum_reward(target_policy, env, max_steps_per_episode)
-
-        return cum, std 
+        return cum, std
 
 
 def off_policy_baseline(env, behavior_policy, target_policy, num_episodes, max_steps_per_episode, rewards, states, rhos, actions, 
@@ -161,9 +160,7 @@ def test_all_estimators(env, behavior_policy, target_policy_BASELINE, target_pol
     exp_std_traj_cv = []
       
     for episode in tqdm(range(num_episodes)):
-
         print('episode:', episode)
-        
         state = np.random.choice(env.num_states) 
         
         # sample trajectory using bahavior policy
@@ -211,4 +208,27 @@ def test_all_estimators(env, behavior_policy, target_policy_BASELINE, target_pol
     plt.legend(loc='best')
     plt.xlabel('Episode')
     plt.ylabel('Mean of Return')
+
+    ''' 
+    # plot rewards and std seperately in order to have cleaner graphs.
+    plt.figure()
+    plt.plot(exp_rewards_DRPG, label='DR-PG', color ='blue')
+    plt.plot(exp_rewards_REINFORCE, label='StandardPG', color='red')
+    plt.plot(exp_rewards_baseline, label='State-Baseline', color='green')
+    plt.plot(exp_rewards_traj_cv, label='Traj_CV', color='purple')
+
+    plt.legend(loc='best')
+    plt.xlabel('Episode')
+    plt.ylabel('Mean of Return')
+
+    plt.figure()
+    plt.plot(exp_std_DRPG, label='DR-PG', color ='blue')
+    plt.plot(exp_std_REINFORCE, label='StandardPG', color='red')
+    plt.plot(exp_std_baseline, label='State-Baseline', color='green')
+    plt.plot(exp_std_traj_cv, label='Traj_CV', color='purple')
+    
+    plt.legend(loc='best')
+    plt.xlabel('Episode')
+    plt.ylabel('Std of Return')
+    '''
     plt.show()

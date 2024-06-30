@@ -9,7 +9,7 @@ def main():
     num_cols     = 5
     num_states   = num_cols * num_rows
     num_actions  = 4 # 0 = left, 1 = up, 2 = right, 3 = down
-    num_episodes = 200
+    num_episodes = 100
     T            = 30
     # deterministic env or stochastic env
     deterministic = True
